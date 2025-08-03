@@ -1,0 +1,53 @@
+{
+  "namespace": "org.example.avro",
+  "type": "record",
+  "name": "Order",
+  "doc": "Order information schema",
+  "fields": [
+    {
+      "name": "orderId",
+      "type": "string",
+      "doc": "Unique order identifier"
+    },
+    {
+      "name": "userId",
+      "type": "long",
+      "doc": "User who placed the order"
+    },
+    {
+      "name": "amount",
+      "type": {
+        "type": "bytes",
+        "logicalType": "decimal",
+        "precision": 10,
+        "scale": 2
+      },
+      "doc": "Order amount"
+    },
+    {
+      "name": "status",
+      "type": {
+        "type": "enum",
+        "name": "OrderStatus",
+        "symbols": ["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED", "CANCELLED"]
+      },
+      "default": "PENDING",
+      "doc": "Order status"
+    },
+    {
+      "name": "items",
+      "type": {
+        "type": "array",
+        "items": "string"
+      },
+      "default": [],
+      "doc": "List of items in the order"
+    },
+    {
+      "name": "orderDate",
+      "type": "long",
+      "logicalType": "timestamp-millis",
+      "doc": "Order placement date"
+    }
+  ]
+}

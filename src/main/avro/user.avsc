@@ -1,0 +1,49 @@
+{
+  "namespace": "org.example.avro",
+  "type": "record",
+  "name": "User",
+  "doc": "User information schema",
+  "fields": [
+    {
+      "name": "id",
+      "type": "long",
+      "doc": "Unique user identifier"
+    },
+    {
+      "name": "username",
+      "type": "string",
+      "doc": "User's username"
+    },
+    {
+      "name": "email",
+      "type": "string",
+      "doc": "User's email address"
+    },
+    {
+      "name": "age",
+      "type": "int",
+      "doc": "User's age"
+    },
+    {
+      "name": "isActive",
+      "type": "boolean",
+      "default": true,
+      "doc": "Whether user is active"
+    },
+    {
+      "name": "createdAt",
+      "type": "long",
+      "logicalType": "timestamp-millis",
+      "doc": "User creation timestamp"
+    },
+    {
+      "name": "metadata",
+      "type": {
+        "type": "map",
+        "values": "string"
+      },
+      "default": {},
+      "doc": "Additional user metadata"
+    }
+  ]
+}
