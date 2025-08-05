@@ -4,6 +4,7 @@ package org.example;
 import io.confluent.kafka.schemaregistry.client.CachedSchemaRegistryClient;
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 import org.apache.avro.generic.GenericRecord;
+import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.configuration.RestOptions;
@@ -17,10 +18,19 @@ import org.apache.flink.formats.avro.typeutils.GenericRecordAvroTypeInfo;
 import org.apache.flink.formats.json.JsonDeserializationSchema;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.ProcessFunction;
+import org.apache.flink.streaming.api.functions.windowing.ProcessWindowFunction;
+import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
+import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
+import org.apache.flink.util.Collector;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.apache.avro.Schema;
+import org.example.avro.User;
 import org.example.pojo.Todo;
 import org.apache.flink.configuration.Configuration;
+
+import java.time.Duration;
+import java.util.Iterator;
 
 public class Main {
 
@@ -38,7 +48,7 @@ public class Main {
 
 
             StreamExecutionEnvironment env = StreamExecutionEnvironment.createLocalEnvironmentWithWebUI(conf);
-            env.setParallelism(1);
+            env.setParallelism(2);
 
            // StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
 
@@ -57,13 +67,55 @@ public class Main {
                     .setValueOnlyDeserializer(deserializationSchema)
                     .build();
 
-            DataStream<GenericRecord> stream = env.fromSource(source, WatermarkStrategy.noWatermarks(), "Kafka Source");
-
-            stream.keyBy( key -> {
-                return key.get("age");
-            }).print();
+            DataStream<GenericRecord> stream =
+                    env.fromSource(source, WatermarkStrategy.noWatermarks(), "Kafka Source");
 
 
+
+
+            DataStream<User> userStream = stream
+                    .assignTimestampsAndWatermarks(
+                            WatermarkStrategy.<GenericRecord>forBoundedOutOfOrderness(Duration.ofSeconds(10))
+                                    .withTimestampAssigner((record,timestamp)-> {
+                                        String createdAt = record.get("createdAt").toString();
+                                        return NumberUtils.toLong(createdAt);
+                                    })
+                    )
+                    .keyBy(key-> key.get("id").toString())
+                    .window(TumblingEventTimeWindows.of(Duration.ofSeconds(3)))
+                    .process(
+                            new ProcessWindowFunction<GenericRecord, User, String, TimeWindow>() {
+                                @Override
+                                public void process(String s, ProcessWindowFunction<GenericRecord, User, String, TimeWindow>.Context context, Iterable<GenericRecord> iterable, Collector<User> collector) throws Exception {
+
+                                    Iterator<GenericRecord> iterator = iterable.iterator();
+
+                                    String vehicle_id = null;
+                                    while (iterator.hasNext()) {
+                                        GenericRecord record = iterator.next();
+                                        if (vehicle_id == null) {
+                                            vehicle_id = record.get("id").toString();
+                                        }
+                                    }
+
+
+                                }
+                            }
+                    );
+//                    .process(new ProcessFunction<GenericRecord, User>() {
+//                    @Override
+//                    public void processElement(GenericRecord genericRecord, ProcessFunction<GenericRecord, User>.Context context, Collector<User> collector) throws Exception {
+//                        User user = new User();
+//
+//                        int userId = NumberUtils.toInt(genericRecord.get("id").toString(),0);
+//                        user.setId(userId);
+//                        user.setEmail("amit-222");
+//                        //
+//                        collector.collect(user);
+//                    }
+//            });
+
+            userStream.print();
 
             env.execute("amit");
 

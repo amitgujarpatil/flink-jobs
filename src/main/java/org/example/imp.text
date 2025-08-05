@@ -1,0 +1,9 @@
+## Even we process 10 yers old/before data flink is able to process
+   consitently.
+
+## By default backed state store in rocksdb in key value pair
+
+## By checkpointing its can recover the state and time where it left
+   processing.
+
+      
