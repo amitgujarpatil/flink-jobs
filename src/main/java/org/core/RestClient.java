@@ -1,5 +1,6 @@
 package org.core;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
@@ -20,6 +21,22 @@ public class RestClient {
         this.client = HttpClient.newHttpClient();
     }
 
+    public JsonNode GET(String pathUri) throws IOException, InterruptedException {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(baseUri + pathUri))
+                .GET()
+                .build();
+
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        if (response.statusCode() == 200) {
+            return objectMapper.readTree(response.body());
+        } else {
+            // Handle error responses
+            throw new RuntimeException("API call failed with status: " + response.statusCode());
+        }
+    }
+
     public <T> T GET(String pathUri, Class<T> responseType) throws IOException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(baseUri + pathUri))
@@ -35,4 +52,6 @@ public class RestClient {
             throw new RuntimeException("API call failed with status: " + response.statusCode());
         }
     }
+
+
 }
