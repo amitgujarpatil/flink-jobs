@@ -28,7 +28,7 @@ public class KafkaAvroProducer {
 
     public static void main(String[] args) {
         KafkaProducerConfig config = new KafkaProducerConfig();
-        Properties producerProps = config.getProducerProperties();
+        Properties producerProps = config.getProducerProperties("AVRO");
 
         System.out.println(producerProps);
 

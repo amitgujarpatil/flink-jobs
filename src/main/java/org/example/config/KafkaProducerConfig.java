@@ -29,7 +29,7 @@ public class KafkaProducerConfig {
         }
     }
 
-    public Properties getProducerProperties() {
+    public Properties getProducerProperties(String type) {
         Properties props = new Properties();
 
         // Basic Kafka Configuration
@@ -37,13 +37,16 @@ public class KafkaProducerConfig {
                 configProps.getProperty("kafka.bootstrap.servers"));
 
         // Serializers
-        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
-        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class.getName());
+        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getCanonicalName());
 
-        // Schema Registry
-        props.put("schema.registry.url", configProps.getProperty("kafka.schema.registry.url"));
-        props.put("auto.register.schemas", configProps.getProperty("schema.registry.auto.register.schemas"));
-        props.put("use.latest.version", configProps.getProperty("schema.registry.use.latest.version"));
+        if(type == "AVRO"){
+            props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class.getName());
+            props.put("schema.registry.url", configProps.getProperty("kafka.schema.registry.url"));
+            props.put("auto.register.schemas", configProps.getProperty("schema.registry.auto.register.schemas"));
+            props.put("use.latest.version", configProps.getProperty("schema.registry.use.latest.version"));
+        } else {
+            props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getCanonicalName());
+        }
 
         // Producer Performance & Reliability
         props.put(ProducerConfig.ACKS_CONFIG, configProps.getProperty("kafka.producer.acks"));
